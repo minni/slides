@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="copyright" content="Copyright &#169; 2023 Tomaso Minelli" />
+  <title>Firma con App IO: l'esperienza con PagoPA</title>
+  <link rel="stylesheet" href="styles/slidy.css">
+  <link rel="stylesheet" href="styles/w3c-blue.css">
+  <script src="scripts/slidy.js"></script>
+  <style type="text/css">
+    div.slide.cover img.cover {
+      margin-right: 1em;
+      margin-top: 1em;
+    }
+    #head-logo {
+      width: initial;
+      margin-right: 1em;
+    }
+    div.toolbar {
+      height: 2em;
+    }
+    div.slide h1 {
+      padding-top: 0.7em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- http://www.w3.org/Talks/Tools/Slidy2 -->
+<div class="background">
+  <img alt="" id="head-icon" src="icon-blue.png" />
+  <object id="head-logo" data="CF_logo_pos_orizz_P207.svg" type="image/svg+xml" title="W3C logo">
+    <a href="https://www.unive.it/">
+      <img alt="W3C logo" id="head-logo-fallback" src="CF_logo_pos_orizz_P207.png" />
+    </a>
+  </object>
+</div>
+
+<div class="slide cover title">
+  <!-- hidden style graphics to ensure they are saved with other content -->
+  <img class="hidden" src="graphics/bullet.png" alt="" />
+  <img class="hidden" src="graphics/fold.gif" alt="" />
+  <img class="hidden" src="graphics/unfold.gif" alt="" />
+  <img class="hidden" src="graphics/fold-dim.gif" alt="" />
+  <img class="hidden" src="graphics/nofold-dim.gif" alt="" />
+  <img class="hidden" src="graphics/unfold-dim.gif" alt="" />
+  <img class="hidden" src="graphics/bullet-fold.gif" alt="" />
+  <img class="hidden" src="graphics/bullet-unfold.gif" alt="" />
+  <img class="hidden" src="graphics/bullet-fold-dim.gif" alt="" />
+  <img class="hidden" src="graphics/bullet-nofold-dim.gif" alt="" />
+  <img class="hidden" src="graphics/bullet-unfold-dim.gif" alt="" />
+
+  <img src="CF_logo_pos_orizz_P207.svg" alt="Logo Università Ca' Foscari Venezia" class="cover" />
+  <br clear="all" />
+  <h1>
+    Firma Digitale con l'AppIO<br />
+    - PagoPA<br />
+    - Esperienza, API e anche un po' di codice<br />
+    - Background in laminas e altre amenità PHP<br />
+  </h1>
+  <p><a href="http://www.unive.it/data/persone/15927543">Tomaso Minelli</a>, Università Ca' Foscari Venezia</p>
+</div>
+
+<div class="slide">
+  <h1>Chi sono</h1>
+  
+  <ul class="incremental">
+    <li class="non-incremental">Programmatore.</li>
+    <li>VB, Perl, PHP, Ruby (Rails), Javascript (ECMA), ...</li>
+    <li>NERD, ma vecchio</li>
+    <li><i>Referente Settore Sviluppo</i> Ca' Foscari</li>
+    <li>Startup BeeViva (www.datachallenge.it), SerenDPT, OOne, ...</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Di cosa parliamo</h1>
+
+  <ul class="incremental">
+    <li class="non-incremental">Integrazione fra sistemi</li>
+    <li>La sperimentazione con https://www.pagopa.gov.it/</li>
+    <li>L'implementazione logica della firma con l'AppIO</li>
+    <li>Le API messe a disposizione da pagopa</li>
+    <li>L'implementazione in PHP</li>
+    <li>
+      Strumenti di contorno
+      <ul>
+        <li>WebSocket informativi</li>
+        <li>Processi in background</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>I sistemi in gioco</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Sistema di firma USign (Cineca) collegato a Infocert o Aruba</li>
+    <li>Sistema di firma AppIO</li>
+    <li>Sistema di protocollo Titulus (Cineca)</li>
+    <li>Gestione studenti Esse3 (Cineca)</li>
+    <li>Fascicolo studente (integrazione fra Titulus ed Esse3)</li>
+    <li>Conservazione documentale Conserca (Cineca)</li>
+    <li>Verifica PDF con VeraPDF</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>L'iter documentale standard</h1>
+  <ul class="incremental">
+    <li class="non-incremental">L'operatore prepara il documento</li>
+    <li>Richiesta dei visti</li>
+    <li>Richiesta delle firme</li>
+    <li>Protocollo</li>
+    <li>Eventuali integrazioni al protocollo</li>
+    <li>PEC e/o notifiche</li>
+    <li>Conservazione</li>
+    <li>Fine? Non sempre: poi i dati vanno pubblicati, ad esempio, in Amministrazione Trasparente</li>
+    <li>Si risparmia tempo/denaro? Soprattutto l'operatore (per il tempo) e nella consernazione (per i costi)</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Primo intermezzo: i websocket</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Come comunico con l'utente per dare lo stato del flusso?</li>
+    <li>Websocket!</li>
+    <li>Implementazione semplificata: server anonimo</li>
+    <li>I processi comunicano al server websocket il cambio di stato, ad esempio del tirocinio 123</li>
+    <li>Il server comunica a tutte le pagine connesse il cambio dello status di qualisiasi processo</li>
+    <li>L'interfaccia screma il cambio di stato dei processi che gestisce</li>
+    <li>Tutte le informazioni "sensibili" sono poi richieste via ajax</li>
+    <li>Il pool dele connessioni è piatto, tranne per quelle dei processi</li>    
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Websocket: la parte Javascript (1)</h1>
+  <pre>
+    // PRIMA RECUPERIAMO LO STATO DEI PROCESSI
+    $.ajax({
+      url: '/stato_dei_processi.json',
+      data.forEach(function(info){
+        onMessage(info);
+      });
+    });
+
+    // LE PRIMITIVE DEL SERVER NON SONO SEMPRE LE STESSE
+    if (window.MozWebSocket) socket = new MozWebSocket(serverUrl);
+    if (window.WebSocket) socket = new WebSocket(serverUrl);
+
+    // IL SERVER INVOCA onMessage OGNI VOLTA CHE RECUPERA UN MESSAGGIO
+    socket.onmessage = function(msg) {
+      var response = JSON.parse(msg.data);
+      var info = JSON.parse(response.data);
+      onMessage(info, response, msg);
+    };
+  </pre>
+</div>
+
+<div class="slide">
+  <h1>Websocket: la parte Javascript (2)</h1>
+  <pre>
+    // ESEMPIO DI onMessage
+    function onMessage(info){
+      if (info.queue != 'tirocini') return;
+      var istanza_idx = that.istanzaIdx(parseInt(info.queue_id));
+      if (istanza_idx < 0) return;
+      if (!istanze[istanza_idx]) return;
+
+      // AGGIORNO I VALORI DELL'ISTANZA IN BASE ALLE INFORMAZIONI RICEVUTE
+      that.istanze[istanza_idx] = Object.assign(that.istanze[istanza_idx], info.options);
+      syncAzioni(istanza_idx);
+    };
+
+    function syncAzioni(id){
+      $.ajax({
+        url: `/stato_istanza/${id}.json`,
+      }).done(function(data){
+        that.istanze[istanza_idx] = Object.assign(that.istanze[istanza_idx], data);
+      });
+    };
+  </pre>
+</div>
+
+<div class="slide">
+  <h1>Ritorniamo all'AppIO: il percorso (1)</h1>
+  <ul class="incremental">
+    <li class="non-incremental">6 giugno 2022: primo incontro per i servizi di notifica</li>
+    <li>7 giugno 2022: adesione ai servizi (PEC, quindi ufficio legale, firme DG...)</li>
+    <li>28 giugno 2022: secondo incontro, funzionamento, api ecc.</li>
+    <li>12 settembre 2022: servizi notifica completi, iniziamo iter firma</li>
+    <li>3 ottobre 2022: avvio adesione servizi "premium" (che comprendonola firma)</li>
+    <li>4 novembre 2022: terzo incontro per l'implementazione della firma con appIO</li>
+    <li>22 dicembre 2022: documento di adesione ai servizi di firma (PEC, quindi ufficio legale, firme DG...)</li>
+    <li>25 maggio 2023: finalmente documentazione api e come funziona il servizio</li>
+    <li>... segue ...</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Ritorniamo all'AppIO: il percorso (2)</h1>
+  <ul class="incremental">
+    <li class="non-incremental">25 maggio 2023: finalmente documentazione api e come funziona il servizio</li>
+    <li>10 giugno 2023: abbiamo anche le chiavi di accesso</li>
+    <li>13 giugno 2023: primo test completo</li>
+    <li>20 giugno 2023: attivazione in produzione</li>
+    <li>29 giugno 2023: proroga smartworking ASIT firmata su appIO</li>
+    <li>settembre 2023: modifica servizi per firme con posizione variabile</li>
+    <li>ottobre 2023: richiesta a Cineca per accettare la firma con USign</li>
+    <li>21 novembre 2023: le firme con l'appIO sono ora controfirmabili in USign</li>
+    <li>... e ora inizieremo i tirocini ...</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>La firma con appIO è una vera firma elettronica?</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Sì</li>
+    <li>Firma one-time (fornita da Namiral) scade in un'ora</li>
+    <li>Documento sigillato con una marca temporale</li>
+    <li>Quindi è una FEQ: Firma Elettronica Qualificata</li>
+    <li>Ha valore probatorio massimo, pari alla firma autografa</li>
+    <li>In caso di disconoscimento, solo per la FEQ vige la presunzione di valenza dello strumento</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>L'iter per la firma</h1>
+  <ol class="incremental">
+    <li class="non-incremental">Creare un "dossier" (vedi slide successiva)</li>
+    <li>Verificare che il codice fiscale sia attivo nell'appIO</li>
+    <li>Creare una "signature request" su quel "dossier"</li>
+    <li>Caricare i documenti da firmare</li>
+    <li>Inviare il documento alla firma (anche qui è un po' più complesso)</li>
+    <li>Attendere il completamento della firma</li>
+    <li>Scaricare il documento firmato</li>
+  </ol>
+</div>
+
+<div class="slide">
+  <h1>Cosa è il "dossier"?</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Contenitore che identifica l'insieme dei metadati dei documenti da firmare</li>
+    <li>Ovvero il tipo di pratica (ad esempio contratto 150 ore)</li>
+    <li>Definisce anche la posizione della firma</li>
+    <li>Inizialmente la posizione della firma si poteva inserire solo nel dossier, ora si può specificare per ogni singolo documento che si carica</li>
+    <li>Il dossier ci spiega che non è una firma "al volo", ma la firma legata all'informatizzazione di uno specifico processo</li>
+    <li>Si, ora dovrei usare la parola "dematerializzazione", ma per me non ha gran valore, se avanza tempo vi spiego perchè</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Cosa è la "signature request"</h1>
+  <ul class="incremental">
+    <li class="non-incremental">La richiesta di firma vera e propria</li>
+    <li>Specifico quale sia il dossier</li>
+    <li>Specifico quanti documeni siano (anche più di uno)</li>
+    <li>Specifico la posizione della firma (overload del dossier)</li>
+    <li>Specifico se la firma è obbligatoria o meno (REQUIRED / OPTIONAL)</li>
+    <li>Specifico la scadenza (da firmare entro il)</li>    
+    <li>...ed ora siamo pronti a caricare i documenti...</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Caricare i documenti</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Per ogni documento della signature request, abbiamo un ID</li>
+    <li>Occorre richiedere un "Upload URL" per ogni documento</li>
+    <li>Quindi si fa un POST all'"Upload URL" col documento...</li>
+    <li>...ma prima occorre validare il documento...</li>
+    <li>PDF standard</li>
+    <li>PDF/A-2A</li>
+    <li>PDF già firmati con firma PAdES</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Inviare il documento alla firma</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Dopo aver creato la "signature request" il processo è in stato WAIT_FOR_UPLOAD</li>
+    <li>Dopo aver caricato i documenti lo stato passa a DRAFT</li>
+    <li>Dopo un po' lo stato diventerà READY</li>
+    <li>A questo punto possiamo inviare la notifica sull'appIO</li>
+    <li>(Perchè devo mandare la notifica? Perchè potrei firmare via QR)</li>
+    <li>Una volta inviato il messaggio, lo stato passa a WAIT_FOR_SIGNATURE</li>
+    <li>Una volta che il cittadino firma, lo stato passa a WAIT_FOR_QTSP</li>
+    <li>Quando Namiral completa firma e marca temporale, lo stato passa a READY (oppure REJECTED se rifiuta)</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Secondo intermezzo: servizi in background</h1>
+  <ul class="incremental">
+    <li class="non-incremental">Ma non usi una coda RabbitMQ o simili? No</li>
+    <li>Nell'ambiente RAILS usavo delayed_job e poi active_job, ma non esiste nulla di simile in Laminas</li>
+    <li>Ma usi Laminas? Sì...</li>
+    <li>L'Università Ca' Foscari aveva un ampio parco applicativi, in Zend e Zend2 e, come dice DHH: quando scrivi codice, ricordati che scrivi codice che diventerà legacy...</li>
+    <li>... poi tanto come UI posso usare VueJS!</li>
+    <li>E quindi?</li>
+    <li>Processi PHP detached eseguiti in command line</li>
+    <li>https://www.geeksforgeeks.org/how-to-execute-a-background-process-in-php/</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1>Secondo intermezzo: avviare il processo in background</h1>
+  <pre>
+    public static function createBackgroundCommand($app, $app_id, $command, $output, $params = []){
+      $bg_cmd_class = new \Unive3\Utils\BgCmd();
+      $bg_id = $bg_cmd_class->getNewId();
+    
+      $output  = str_replace('[id]', $bg_id, $output);
+      $command = " {$command} {$bg_id}";
+      
+      # echo $! mi ritorna il PID del processo
+      $full_cmd   = sprintf('%s >> %s 2>&1 & echo $!', $command, $output);
+      
+      # ECCO, STA TUTTO IN QUESTO shell_exec
+      $processId  = shell_exec($full_cmd);
+      
+      # SE TUTTO È ANDATO BENE, SCRIVO LA RIGA SU DB
+      $bg_cmd_class->insert(['ID' => $bg_id, .... ]);
+    }
+  </pre>
+</div>
+
+<div class="slide">
+  <h1>Ancora codice: la classe per gestire l'appIO (1)</h1>
+  <pre>
+    namespace Application\Model;
+    class FirmaIo {
+      public function getGuzzleClient(){}
+      public function getErrors(){}
+      public function getCfId($cf){}
+
+      public function validatePdf($pdf, $pos){
+        $response = $this->getGuzzleClient()->request('POST', "validate-document", ...
+      }
+
+      public function createSignatureRequest($dossier_id, $signer_id, $title = null, $firma_title = null, $pos = null){
+        $response = $this->getGuzzleClient()->request('POST', "signature-requests", ...
+      }
+
+      public function uploadFile($signature_id, $document_id, $pdf){
+        $upload_url = $this->getGuzzleClient()->request('GET',
+          "signature-requests/{$signature_id}/documents/{$document_id}/upload_url", ...
+        ...
+        $result = $client->put($upload_url, ...
+      }
+    </pre>
+</div>
+
+<div class="slide">
+  <h1>Ancora codice: la classe per gestire l'appIO (2)</h1>
+  <pre>
+      public function setReady($signature_id){
+        $result = $this->getGuzzleClient()->request('PUT',
+          "signature-requests/{$signature_id}/status", ...
+      }
+
+      public function getStatus($signature_id){
+        $result = $this->getGuzzleClient()->request('GET',
+          "signature-requests/{$signature_id}" ...
+      }
+
+      public function isReady($signature_id){
+        return $this->getStatus($signature_id) == 'READY';
+      }
+    </pre>
+</div>
+
+<div class="slide">
+  <h1>Ancora codice: la classe per gestire l'appIO (3)</h1>
+  <pre>
+      public function isReadyToSign($signature_id){
+        # DRAFT - la richiesta di firma è stata creata
+        # READY - La richiesta di firma è stata finalizzata
+        # WAIT_FOR_SIGNATURE - la richiesta di firma è stata analizzata
+        # WAIT_FOR_QTSP - il cittadino ha completato il processo di firma
+        # SIGNED - tutti i documenti contenuti nella richiesta di firma sono stati firmati;
+        # REJECTED - non è stato possibile procedere con la firma dei documenti.
+        # CANCELLED - Questo stato sarà assegnato a una richiesta nel caso in cui, per qualsiasi motivo, non sia più possibile apporre la firma
+        if ($this->getStatus($signature_id) == 'DRAFT') return false;
+        if ($this->getStatus($signature_id) == 'READY') return false;
+        return true;
+      }
+
+      public function isSigned($signature_id){
+        return $this->getStatus($signature_id) == 'SIGNED';
+      }
+
+      public function isRejected($signature_id){
+        return $this->getStatus($signature_id) == 'REJECTED';
+      }
+    </pre>
+</div>
+
+<div class="slide">
+  <h1>Ancora codice: la classe per gestire l'appIO (4)</h1>
+  <pre>
+      public function notifySignatureRequest($signature_id){
+        $result = $this->getGuzzleClient()->request('PUT',
+          "signature-requests/{$signature_id}/notification", [
+      ])->getBody()->getContents();
+
+      $this->variables = json_decode($result, true);
+      return $this->variables['io_message_id'];
+    }
+  </pre>
+</div>
+
+<div class="slide">
+  <h1>Ancora codice: in attesa del documento firmato...</h1>
+  <pre>
+    $firma_io = new \Application\Model\FirmaIo();
+    $previous_status = @$this->variables['io_status'];
+
+    while (true) {
+      # CHIEDO LO STATO DEL PROCESSO
+      $this->variables['io_status'] = $firma_io->getStatus($this->variables['io_signature_id']);
+      if ($this->variables['io_status'] == 'REJECTED') {
+        ...
+      } elseif ($this->variables['io_status'] == 'SIGNED') {
+        ...
+      } elseif ($this->variables['io_status'] == 'WAIT_FOR_QTSP') {
+        ...
+      } elseif ($this->variables['io_status'] == 'WAIT_FOR_SIGNATURE') {
+        ...
+      } elseif ($this->variables['io_status'] == 'READY') {
+        $this->verificaNotifica();
+        ...
+      } elseif ($this->variables['io_status'] == 'DRAFT') {
+        $firma_io->setReady($this->variables['io_signature_id']);
+        ....
+      } else {
+        die("You should not be here");
+      }
+    }
+  </pre>
+</div>
+
+<div class="slide">
+  <h1>Ed ecco il risultato!</h1>
+  <ul>
+    <li>Il documento conterrà i campi con la firma nella posizione indicata</li>
+    <li>oppure nei placeholder inseriti nel documento PDF</li>
+  </ul>
+  <div>
+    <img src="./firmato_con_appio.jpg" style="max-width: 750px;">
+  </div>
+</div>
+
+<div class="slide">
+  <h1>Approfondimenti</h1>
+  <ul>
+    <li>Websocket</li>
+    <li>Background</li>
+    <li>A cosa serve il protocollo?</li>
+    <li>Dematerializzazione</li>
+    <li>Informatizzazione tirocini</li>
+    <li>Firma clausole aggiuntive</li>
+    <li>Ma quante firme servono per un contratto?</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h1 class="slide">Questions &amp; Answers</h1>
+  <table width="90%" height="80%">
+    <tr>
+      <td stle="width: 100%; height: 100%; min-height: 100%;" align="center" valign="middle">
+        <font size="+5"><b>Q&amp;A</b></font>
+        <br /><br />
+        tomaso(dot)minelli(at)unive(dot)it
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="slide">
+  <h1 class="slide">Fine!</h1>
+  <table width="90%" height="80%">
+    <tr>
+      <td stle="width: 100%; height: 100%; min-height: 100%;" align="center" valign="middle">
+        <font size="+5"><b>GRAZIE!</b></font>
+        <br /><br />
+        tomaso(dot)minelli(at)unive(dot)it
+      </td>
+    </tr>
+  </table>
+</div>
+
+  
+</body>
+</html>
