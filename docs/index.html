@@ -66,8 +66,8 @@
 <div class="slide">
   <h1>Chi sono</h1>
   
-  <ul class="incremental">
-    <li class="non-incremental">Programmatore.</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Programmatore.</li>
     <li>VB, Perl, PHP, Ruby (Rails), Javascript (ECMA), ...</li>
     <li>NERD, ma vecchio</li>
     <li><i>Referente Settore Sviluppo</i> Ca' Foscari</li>
@@ -78,8 +78,8 @@
 <div class="slide">
   <h1>Di cosa parliamo</h1>
 
-  <ul class="incremental">
-    <li class="non-incremental">Integrazione fra sistemi</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Integrazione fra sistemi</li>
     <li>La sperimentazione con https://www.pagopa.gov.it/</li>
     <li>L'implementazione logica della firma con l'AppIO</li>
     <li>Le API messe a disposizione da pagopa</li>
@@ -96,8 +96,8 @@
 
 <div class="slide">
   <h1>I sistemi in gioco</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Sistema di firma USign (Cineca) collegato a Infocert o Aruba</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Sistema di firma USign (Cineca) collegato a Infocert o Aruba</li>
     <li>Sistema di firma AppIO</li>
     <li>Sistema di protocollo Titulus (Cineca)</li>
     <li>Gestione studenti Esse3 (Cineca)</li>
@@ -109,8 +109,8 @@
 
 <div class="slide">
   <h1>L'iter documentale standard</h1>
-  <ul class="incremental">
-    <li class="non-incremental">L'operatore prepara il documento</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">L'operatore prepara il documento</li>
     <li>Richiesta dei visti</li>
     <li>Richiesta delle firme</li>
     <li>Protocollo</li>
@@ -124,8 +124,8 @@
 
 <div class="slide">
   <h1>Primo intermezzo: i websocket</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Come comunico con l'utente per dare lo stato del flusso?</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Come comunico con l'utente per dare lo stato del flusso?</li>
     <li>Websocket!</li>
     <li>Implementazione semplificata: server anonimo</li>
     <li>I processi comunicano al server websocket il cambio di stato, ad esempio del tirocinio 123</li>
@@ -187,8 +187,8 @@
 
 <div class="slide">
   <h1>Ritorniamo all'AppIO: il percorso (1)</h1>
-  <ul class="incremental">
-    <li class="non-incremental">6 giugno 2022: primo incontro per i servizi di notifica</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">6 giugno 2022: primo incontro per i servizi di notifica</li>
     <li>7 giugno 2022: adesione ai servizi (PEC, quindi ufficio legale, firme DG...)</li>
     <li>28 giugno 2022: secondo incontro, funzionamento, api ecc.</li>
     <li>12 settembre 2022: servizi notifica completi, iniziamo iter firma</li>
@@ -202,8 +202,8 @@
 
 <div class="slide">
   <h1>Ritorniamo all'AppIO: il percorso (2)</h1>
-  <ul class="incremental">
-    <li class="non-incremental">25 maggio 2023: finalmente documentazione api e come funziona il servizio</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">25 maggio 2023: finalmente documentazione api e come funziona il servizio</li>
     <li>10 giugno 2023: abbiamo anche le chiavi di accesso</li>
     <li>13 giugno 2023: primo test completo</li>
     <li>20 giugno 2023: attivazione in produzione</li>
@@ -217,8 +217,8 @@
 
 <div class="slide">
   <h1>La firma con appIO è una vera firma elettronica?</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Sì</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Sì</li>
     <li>Firma one-time (fornita da Namiral) scade in un'ora</li>
     <li>Documento sigillato con una marca temporale</li>
     <li>Quindi è una FEQ: Firma Elettronica Qualificata</li>
@@ -229,8 +229,8 @@
 
 <div class="slide">
   <h1>L'iter per la firma</h1>
-  <ol class="incremental">
-    <li class="non-incremental">Creare un "dossier" (vedi slide successiva)</li>
+  <ol class="incrementalz">
+    <li class="non-incrementalz">Creare un "dossier" (vedi slide successiva)</li>
     <li>Verificare che il codice fiscale sia attivo nell'appIO</li>
     <li>Creare una "signature request" su quel "dossier"</li>
     <li>Caricare i documenti da firmare</li>
@@ -242,8 +242,8 @@
 
 <div class="slide">
   <h1>Cosa è il "dossier"?</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Contenitore che identifica l'insieme dei metadati dei documenti da firmare</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Contenitore che identifica l'insieme dei metadati dei documenti da firmare</li>
     <li>Ovvero il tipo di pratica (ad esempio contratto 150 ore)</li>
     <li>Definisce anche la posizione della firma</li>
     <li>Inizialmente la posizione della firma si poteva inserire solo nel dossier, ora si può specificare per ogni singolo documento che si carica</li>
@@ -254,8 +254,8 @@
 
 <div class="slide">
   <h1>Cosa è la "signature request"</h1>
-  <ul class="incremental">
-    <li class="non-incremental">La richiesta di firma vera e propria</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">La richiesta di firma vera e propria</li>
     <li>Specifico quale sia il dossier</li>
     <li>Specifico quanti documeni siano (anche più di uno)</li>
     <li>Specifico la posizione della firma (overload del dossier)</li>
@@ -267,8 +267,8 @@
 
 <div class="slide">
   <h1>Caricare i documenti</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Per ogni documento della signature request, abbiamo un ID</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Per ogni documento della signature request, abbiamo un ID</li>
     <li>Occorre richiedere un "Upload URL" per ogni documento</li>
     <li>Quindi si fa un POST all'"Upload URL" col documento...</li>
     <li>...ma prima occorre validare il documento...</li>
@@ -280,8 +280,8 @@
 
 <div class="slide">
   <h1>Inviare il documento alla firma</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Dopo aver creato la "signature request" il processo è in stato WAIT_FOR_UPLOAD</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Dopo aver creato la "signature request" il processo è in stato WAIT_FOR_UPLOAD</li>
     <li>Dopo aver caricato i documenti lo stato passa a DRAFT</li>
     <li>Dopo un po' lo stato diventerà READY</li>
     <li>A questo punto possiamo inviare la notifica sull'appIO</li>
@@ -294,8 +294,8 @@
 
 <div class="slide">
   <h1>Secondo intermezzo: servizi in background</h1>
-  <ul class="incremental">
-    <li class="non-incremental">Ma non usi una coda RabbitMQ o simili? No</li>
+  <ul class="incrementalz">
+    <li class="non-incrementalz">Ma non usi una coda RabbitMQ o simili? No</li>
     <li>Nell'ambiente RAILS usavo delayed_job e poi active_job, ma non esiste nulla di simile in Laminas</li>
     <li>Ma usi Laminas? Sì...</li>
     <li>L'Università Ca' Foscari aveva un ampio parco applicativi, in Zend e Zend2 e, come dice DHH: quando scrivi codice, ricordati che scrivi codice che diventerà legacy...</li>
